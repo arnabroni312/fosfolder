@@ -2,13 +2,8 @@
 	session_start();
 	$foodId=$_POST["food_id"];
 	$foodQuantity=$_POST["item_quantity"];
-	$foodName=$_POST["food_name"];
-	$foodPrice=$_POST["food_price"];
-
 	$details = array(
 		'id' => $foodId,
-		'name' => $foodName,
-		'price' => $foodPrice,
 		'quantity' => $foodQuantity
 	);
 

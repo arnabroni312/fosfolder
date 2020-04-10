@@ -181,6 +181,10 @@
 
                                         $total = 0;
                                         foreach ($_SESSION['cart_details'] as $item) {
+											$query=mysqli_query($con,"select * from  tblfood where id=".$item["id"]);
+											$itemDetails=mysqli_fetch_array($query);
+											$item["name"]=$itemDetails["ItemName"];
+											$item["price"]=$itemDetails["ItemPrice"];
                                             echo '
                                             <tr>
                                                 <td>'.$item["name"].'</td>
