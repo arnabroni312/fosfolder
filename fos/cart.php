@@ -234,7 +234,7 @@
                                 </div>                           
                             </div>
 
-                            <form method="post">
+                            <form method="post" id="address-form">
                                 <div class="col-xs-12 col-md-12 col-lg-12" style="margin-top: 20px;">
                                     <div class="sidebar-wrap">
                                         <div class="widget widget-cart">
@@ -252,7 +252,8 @@
                                                             <input type="text" name="streename" placeholder="Street Name" class="form-control" required="true">       
                                                             <input type="text" name="area"  placeholder="Area" class="form-control" required="true">
                                                             <input type="text" name="landmark" placeholder="Landmark if any" class="form-control"> 
-                                                            <input type="text" name="city" placeholder="City" class="form-control">                 
+                                                            <input type="text" name="city" placeholder="City" class="form-control" required="true">           
+															<input type="text" name="pincode" placeholder="Pincode" class="form-control" required="true">           
                                                     
                                                     </div>
                                                 </div>
@@ -297,6 +298,52 @@
     <script src="js/foodpicky.min.js"></script>
 
     <script>
+		function geocode(address,callback){
+			$.get("https://maps.googleapis.com/maps/api/geocode/json?address="+address+"&key=AIzaSyAXbeSXDpsYVcu3mgrRwkgaWG19CmcX40Q",function(data){
+				var lat=data.results[0].geometry.location.lat;
+				var lng=data.results[0].geometry.location.lng;
+				return callback(lat,lng);
+			});
+		}
+		$("#address-form").submit(function(){
+			var inputs=$("#address-form :input");
+			window.inputs=inputs;
+			var address={};
+			for(var i=0;i<inputs.length;i++){
+				var element=$(inputs[i]);
+				switch(element.attr("name")){
+					case "flatbldgnumber":
+						address.flatbldgnumber=element.val();
+						break;
+					case "streename":
+						address.streename=element.val();
+						break;
+					case "area":
+						address.area=element.val();
+						break;
+					case "landmark":
+						address.landmark=element.val();
+						break;
+					case "city":
+						address.city=element.val();
+						break;
+					case "pincode":
+						address.pincode=element.val();
+						break;
+				}
+			}
+			var humanReadableAddress=address.flatbldgnumber+" "+address.streename+" "+", "+address.area+", "+address.city+" "+address.pincode;
+			geocode(humanReadableAddress,function(lat,lng){
+				address.latitude=lat;
+				address.longitude=lng;
+				address.placeorder=1;
+				$.post("cart.php",address,
+				function(data, status){
+					location.reload();
+				});
+			});
+			return false;
+		});
 		var quantity=[];
 		function postData(foodId,foodQty,foodName,foodPrice){
 			$.post("add-items.php",
