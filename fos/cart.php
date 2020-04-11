@@ -180,9 +180,12 @@
                                                 <tbody>';
 
                                         $total = 0;
-                                        foreach ($_SESSION['cart_details'] as $item) {
-											$query=mysqli_query($con,"select * from  tblfood where id=".$item["id"]);
+                                        foreach ($_SESSION['cart_details'] as $itemId=>$itemQuantity) {
+											$query=mysqli_query($con,"select * from  tblfood where id=".$itemId);
 											$itemDetails=mysqli_fetch_array($query);
+											$item=array();
+											$item["id"]=$itemId;
+											$item['quantity']=$itemQuantity;
 											$item["name"]=$itemDetails["ItemName"];
 											$item["price"]=$itemDetails["ItemPrice"];
                                             echo '

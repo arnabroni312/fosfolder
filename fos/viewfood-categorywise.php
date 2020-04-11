@@ -37,6 +37,11 @@ if(!isset($_SESSION['cart'])){
     <link href="css/animate.css" rel="stylesheet">
     <!-- Custom styles for this template -->
     <link href="css/style.css" rel="stylesheet"> </head>
+	<style type="text/css">
+		.hidden{
+			display:none;
+		}
+	</style>
 
 <body>
     <div class="site-wrapper animsition" data-animsition-in="fade-in" data-animsition-out="fade-out">
@@ -234,6 +239,7 @@ while ($row=mysqli_fetch_array($ret)) {
     <script src="js/jquery.isotope.min.js"></script>
     <script src="js/headroom.js"></script>
     <script src="js/foodpicky.min.js"></script>
+	<script src="js/manage-food-items.js"></script>
 </body>
 
 </html>
