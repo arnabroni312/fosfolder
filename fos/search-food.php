@@ -34,7 +34,12 @@ if($query)
     <link href="css/animsition.min.css" rel="stylesheet">
     <link href="css/animate.css" rel="stylesheet">
     <!-- Custom styles for this template -->
-    <link href="css/style.css" rel="stylesheet"> </head>
+    <link href="css/style.css" rel="stylesheet">
+	<style type="text/css">
+		.hidden{
+			display:none;
+		}
+	</style>	</head>
 
 <body>
     <div class="site-wrapper animsition" data-animsition-in="fade-in" data-animsition-out="fade-out">
@@ -147,9 +152,25 @@ $searchdata=$_POST['searchdata'];
 <a href="login.php" class="btn theme-btn-dash pull-right">Order Now</a>
 <?php } else {?>
     <form method="post"> 
-    <input type="hidden" name="foodid" value="<?php echo $row['ID'];?>">   
-<button type="submit" name="submit" class="btn theme-btn-dash pull-right">Order Now</button>
-  </form> 
+		<input type="hidden" name="foodId" value="<?php echo $row['ID'];?>">
+		<input type="hidden" name="foodName" value="<?php echo $row['ItemName'];?>">
+		<input type="hidden" name="foodPrice" value="<?php echo $row['ItemPrice'];?>">   
+	<?php if(isset($_SESSION['cart_details']) && $_SESSION['cart_details'][$row['ID']]['quantity']>0){?>
+		<button type="submit" name="submit" class="btn theme-btn-dash pull-right add-item hidden" data-row-id="<?php echo $row['ID'];?>" data-row-name="<?php echo $row['ItemName'];?>" data-row-price="<?php echo $row['ItemPrice'];?>" id="add-item-<?php echo $row['ID'];?>">Order Now</button>
+		<div class="order-control" id="order-control-<?php echo $row['ID'];?>">
+			<button type="submit" name="submit" class="btn theme-btn-dash pull-right modify-qty" data-row-id="<?php echo $row['ID'];?>" data-row-name="<?php echo $row['ItemName'];?>" data-row-price="<?php echo $row['ItemPrice'];?>" id="item-plus-<?php echo $row['ID'];?>"><i class='fa fa-plus'></i></button>
+			<span class="pull-right" style="color:orange;font-weight:bold;padding:5px;" id="item-qty-<?php echo $row['ID'];?>"><?php echo $_SESSION['cart_details'][$row['ID']]['quantity']; ?></span>
+			<button type="submit" name="submit" class="btn theme-btn-dash pull-right modify-qty" data-row-id="<?php echo $row['ID'];?>" data-row-name="<?php echo $row['ItemName'];?>" data-row-price="<?php echo $row['ItemPrice'];?>" id="item-minus-<?php echo $row['ID'];?>"><i class='fa fa-minus'></i></button>
+		</div>
+	<?php } else{?>
+		<button type="submit" name="submit" class="btn theme-btn-dash pull-right add-item" data-row-id="<?php echo $row['ID'];?>" data-row-name="<?php echo $row['ItemName'];?>" data-row-price="<?php echo $row['ItemPrice'];?>" id="add-item-<?php echo $row['ID'];?>">Order Now</button>
+		<div class="order-control hidden" id="order-control-<?php echo $row['ID'];?>">
+			<button type="submit" name="submit" class="btn theme-btn-dash pull-right modify-qty" data-row-id="<?php echo $row['ID'];?>" data-row-name="<?php echo $row['ItemName'];?>" data-row-price="<?php echo $row['ItemPrice'];?>" id="item-plus-<?php echo $row['ID'];?>"><i class='fa fa-plus'></i></button>
+			<span class="pull-right" style="color:orange;font-weight:bold;padding:5px;" id="item-qty-<?php echo $row['ID'];?>">0</span>
+			<button type="submit" name="submit" class="btn theme-btn-dash pull-right modify-qty" data-row-id="<?php echo $row['ID'];?>" data-row-name="<?php echo $row['ItemName'];?>" data-row-price="<?php echo $row['ItemPrice'];?>" id="item-minus-<?php echo $row['ID'];?>"><i class='fa fa-minus'></i></button>
+		</div>
+	<?php }?>
+	</form>
 <?php }?>
              </div>
                                         </div>
@@ -183,5 +204,6 @@ $searchdata=$_POST['searchdata'];
     <script src="js/jquery.isotope.min.js"></script>
     <script src="js/headroom.js"></script>
     <script src="js/foodpicky.min.js"></script>
+	<script src="js/manage-food-items.js"></script>
 </body>
 </html>
