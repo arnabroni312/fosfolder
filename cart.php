@@ -14,11 +14,14 @@
             $area=$_POST['area'];
             $lndmark=$_POST['landmark'];
             $city=$_POST['city'];
+            $pinc=$_POST['pincode'];
+            $lati=$_POST['latitude'];
+            $longi=$_POST['longitude'];
             $userid=$_SESSION['fosuid'];
             //genrating order number
             $orderno= mt_rand(100000000, 999999999);
             $query="update tblorders set OrderNumber='$orderno',IsOrderPlaced='1' where UserId='$userid' and IsOrderPlaced is null;";
-            $query.="insert into tblorderaddresses(UserId,Ordernumber,Flatnobuldngno,StreetName,Area,Landmark,City) values('$userid','$orderno','$fnaobno','$street','$area','$lndmark','$city');";
+            $query.="insert into tblorderaddresses(UserId,Ordernumber,Flatnobuldngno,StreetName,Area,Landmark,City,pincodes,latit,longit) values('$userid','$orderno','$fnaobno','$street','$area','$lndmark','$city','$pinc','$lati','$longi');";
 
             $result = mysqli_multi_query($con, $query);
             if ($result) {
@@ -179,8 +182,15 @@
                                                 </thead>
                                                 <tbody>';
 
-                                        $total = 0;
-                                        foreach ($_SESSION['cart_details'] as $item) {
+                                       $total = 0;
+                                        foreach ($_SESSION['cart_details'] as $itemId=>$itemQuantity) {
+                                            $query=mysqli_query($con,"select * from  tblfood where id=".$itemId);
+                                            $itemDetails=mysqli_fetch_array($query);
+                                            $item=array();
+                                            $item["id"]=$itemId;
+                                            $item['quantity']=$itemQuantity;
+                                            $item["name"]=$itemDetails["ItemName"];
+                                            $item["price"]=$itemDetails["ItemPrice"];
                                             echo '
                                             <tr>
                                                 <td>'.$item["name"].'</td>
@@ -227,7 +237,7 @@
                                 </div>                           
                             </div>
 
-                            <form method="post">
+                            <form method="post" id="address-form">
                                 <div class="col-xs-12 col-md-12 col-lg-12" style="margin-top: 20px;">
                                     <div class="sidebar-wrap">
                                         <div class="widget widget-cart">
@@ -245,7 +255,8 @@
                                                             <input type="text" name="streename" placeholder="Street Name" class="form-control" required="true">       
                                                             <input type="text" name="area"  placeholder="Area" class="form-control" required="true">
                                                             <input type="text" name="landmark" placeholder="Landmark if any" class="form-control"> 
-                                                            <input type="text" name="city" placeholder="City" class="form-control">                 
+                                                            <input type="text" name="city" placeholder="City" class="form-control" required="true">           
+                                                            <input type="text" name="pincode" placeholder="Pincode" class="form-control" required="true">           
                                                     
                                                     </div>
                                                 </div>
@@ -290,68 +301,114 @@
     <script src="js/foodpicky.min.js"></script>
 
     <script>
-		var quantity=[];
-		function postData(foodId,foodQty,foodName,foodPrice){
-			$.post("add-items.php",
-			  {
-				food_id: foodId,
-				item_quantity: foodQty,
+        function geocode(address,callback){
+            $.get("https://maps.googleapis.com/maps/api/geocode/json?address="+address+"&key=AIzaSyAXbeSXDpsYVcu3mgrRwkgaWG19CmcX40Q",function(data){
+                var lat=data.results[0].geometry.location.lat;
+                var lng=data.results[0].geometry.location.lng;
+                return callback(lat,lng);
+            });
+        }
+        $("#address-form").submit(function(){
+            var inputs=$("#address-form :input");
+            window.inputs=inputs;
+            var address={};
+            for(var i=0;i<inputs.length;i++){
+                var element=$(inputs[i]);
+                switch(element.attr("name")){
+                    case "flatbldgnumber":
+                        address.flatbldgnumber=element.val();
+                        break;
+                    case "streename":
+                        address.streename=element.val();
+                        break;
+                    case "area":
+                        address.area=element.val();
+                        break;
+                    case "landmark":
+                        address.landmark=element.val();
+                        break;
+                    case "city":
+                        address.city=element.val();
+                        break;
+                    case "pincode":
+                        address.pincode=element.val();
+                        break;
+                }
+            }
+            var humanReadableAddress=address.flatbldgnumber+" "+address.streename+" "+", "+address.area+", "+address.city+" "+address.pincode;
+            geocode(humanReadableAddress,function(lat,lng){
+                address.latitude=lat;
+                address.longitude=lng;
+                address.placeorder=1;
+                $.post("cart.php",address,
+                function(data, status){
+                    location.reload();
+                });
+            });
+            return false;
+        });
+        var quantity=[];
+        function postData(foodId,foodQty,foodName,foodPrice){
+            $.post("add-items.php",
+              {
+                food_id: foodId,
+                item_quantity: foodQty,
                 food_name: foodName,
                 food_price: foodPrice
-			  },
-			  function(data, status){
-				console.log("Data: " + data + "\nStatus: " + status);
+              },
+              function(data, status){
+                console.log("Data: " + data + "\nStatus: " + status);
                 location.reload();
-			});
-		}
+            });
+        }
 
         
 
-		$(".add-item").click(function(){
-			var foodId=$(this).attr("data-row-id");
+        $(".add-item").click(function(){
+            var foodId=$(this).attr("data-row-id");
             var foodName=$(this).attr("data-row-name");
             var foodPrice=$(this).attr("data-row-price");
-			
+            
             $("#add-item-"+foodId).hide();
-			$("#order-control-"+foodId).show();
-			if(quantity[foodId]==undefined){
-				if($("#item-qty-"+foodId).html()==undefined){
-					quantity[foodId]=0;
-				} else{
-					quantity[foodId]=$("#item-qty-"+foodId).html();
-				}
-			}
-			quantity[foodId]++;
-			$("#item-qty-"+foodId).html(quantity[foodId]);
-			postData(foodId,quantity[foodId],foodName,foodPrice);
-			return false;
-		});
-		$(".modify-qty").click(function(){
-			var foodId=$(this).attr("data-row-id");
+            $("#order-control-"+foodId).show();
+            if(quantity[foodId]==undefined){
+                if($("#item-qty-"+foodId).html()==undefined){
+                    quantity[foodId]=0;
+                } else{
+                    quantity[foodId]=$("#item-qty-"+foodId).html();
+                }
+            }
+            quantity[foodId]++;
+            $("#item-qty-"+foodId).html(quantity[foodId]);
+            postData(foodId,quantity[foodId],foodName,foodPrice);
+            return false;
+        });
+        $(".modify-qty").click(function(){
+            var foodId=$(this).attr("data-row-id");
             var foodName=$(this).attr("data-row-name");
             var foodPrice=$(this).attr("data-row-price");
 
-			if(quantity[foodId]==undefined){
-				if($("#item-qty-"+foodId).html()==undefined){
-					quantity[foodId]=0;
-				} else{
-					quantity[foodId]=$("#item-qty-"+foodId).html();
-				}
-			}
-			if($(this).attr("id")=="item-plus-"+foodId){
-				quantity[foodId]++;
-			} else{
-				quantity[foodId]--;
-			}
-			$("#item-qty-"+foodId).html(quantity[foodId]);
-			if(quantity[foodId]==0){
-				$("#order-control-"+foodId).hide();
-				$("#add-item-"+foodId).show();
-			}
-			postData(foodId,quantity[foodId],foodName,foodPrice);
-			return false;
-		});
-	</script>
+            if(quantity[foodId]==undefined){
+                if($("#item-qty-"+foodId).html()==undefined){
+                    quantity[foodId]=0;
+                } else{
+                    quantity[foodId]=$("#item-qty-"+foodId).html();
+                }
+            }
+            if($(this).attr("id")=="item-plus-"+foodId){
+                quantity[foodId]++;
+            } else{
+                quantity[foodId]--;
+            }
+            $("#item-qty-"+foodId).html(quantity[foodId]);
+            if(quantity[foodId]==0){
+                $("#order-control-"+foodId).hide();
+                $("#add-item-"+foodId).show();
+            }
+            postData(foodId,quantity[foodId],foodName,foodPrice);
+            return false;
+        });
+    </script>
 </body>
 
 </html>
